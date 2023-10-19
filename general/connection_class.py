@@ -42,3 +42,14 @@ instance = DataRetriever("SELECT * FROM some_table")
 
 # Access the data
 print(instance.data)
+
+
+"""
+CREATE TABLE ##ErrorLog
+(
+    ID INT IDENTITY(1,1) PRIMARY KEY,
+    ErrorMessage NVARCHAR(MAX),
+    ErrorTime DATETIME DEFAULT GETDATE()
+);
+
+"""
