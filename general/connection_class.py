@@ -1,5 +1,6 @@
 import pandas as pd
 from sqlalchemy import create_engine, text
+from sqlalchemy.exc import SQLAlchemyError
 
 class DataRetriever:
     # Class-level attribute to store the engine
@@ -19,19 +20,19 @@ class DataRetriever:
         """Fetch data using the provided SQL query"""
         try:
             self.data = pd.read_sql(self.sql_query, self._engine)
-        except Exception as e:
+        except SQLAlchemyError as e:  # Capture only SQLAlchemy related errors
             self._log_error(str(e))
 
     def _log_error(self, error_message):
         """Log errors to a table in the database"""
         error_log_query = text("""
-            INSERT INTO error_log_table (error_message)
+            INSERT INTO ##ErrorLog (ErrorMessage)
             VALUES (:error_message)
         """)
-        
+
         # Use the engine to execute the insert
         with self._engine.connect() as connection:
-            connection.execute(error_log_query, error_message=error_message)
+            connection.execute(error_log_query, params={"error_message": error_message})
 
 # Example usage:
 # Set up the engine first
