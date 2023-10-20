@@ -1,60 +1,44 @@
-import nltk
-from nltk.util import ngrams
-from scipy.cluster.hierarchy import linkage, dendrogram, fcluster
-import matplotlib.pyplot as plt
+import numpy as np
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
 
-nltk.download('punkt')
-
-def jaccard_distance(str1, str2, n=3):
-    """Calculate Jaccard distance between two strings using n-grams."""
-    s1 = set(ngrams(str1, n))
-    s2 = set(ngrams(str2, n))
-    return 1 - float(len(s1 & s2)) / float(len(s1 | s2))
-
-def create_condensed_distance_matrix(strings, n=3):
-    """Generate a condensed matrix of Jaccard distances."""
-    num_strings = len(strings)
-    distance_array = []
-    
-    for i in range(num_strings):
-        for j in range(i+1, num_strings):
-            distance_array.append(jaccard_distance(strings[i], strings[j], n))
-    
-    return distance_array
-
-def cluster_strings(strings, t=0.6, n=3):
-    """Cluster strings using hierarchical clustering and Jaccard distance."""
-    distance_array = create_condensed_distance_matrix(strings, n)
-    
-    linkage_matrix = linkage(distance_array, method="single")
-    
-    plt.figure(figsize=(10, 5))
-    dendrogram(linkage_matrix, labels=strings)
-    plt.title("Hierarchical Clustering of Vendor Names")
-    plt.show()
-    
-    labels = fcluster(linkage_matrix, t, criterion='distance')
-    clusters = {}
-    for i, label in enumerate(labels):
-        if label not in clusters:
-            clusters[label] = []
-        clusters[label].append(strings[i])
-    
-    return clusters
-
-# Example vendor names with variations
+# Sample vendor names (you can replace this list with your data)
 vendor_names = [
     "Apple Inc.",
-    "Apple Incorporated",
     "Apple",
+    "Apple Co.",
     "Microsoft Corp.",
-    "Microsoft Corporation",
-    "Google LLC",
-    "Goog LLC",
-    "Amazon",
-    "Amazone"
+    "Microsoft Inc.",
+    "Microsoft",
+    "Samsung Electronics",
+    "Samsung",
+    "Samsung Corp.",
+    "Sony Corporation",
+    "Sony"
 ]
 
-clusters = cluster_strings(vendor_names, t=0.6)
-for cluster_id, names in clusters.items():
-    print(f"Cluster {cluster_id}: {', '.join(names)}")
+# 1. Preprocess vendor names: Convert to lowercase and strip whitespaces
+preprocessed_names = [name.lower().strip() for name in vendor_names]
+
+# 2. Convert vendor names into a matrix
+vectorizer = TfidfVectorizer()
+X = vectorizer.fit_transform(preprocessed_names)
+
+# 3. Cluster the vendor names
+# For this example, let's assume we want 4 clusters (you can change this number)
+n_clusters = 4
+kmeans = KMeans(n_clusters=n_clusters, random_state=42)
+clusters = kmeans.fit_predict(X)
+
+# Print the clusters
+for i in range(n_clusters):
+    print(f"Cluster {i + 1}:")
+    for idx, label in enumerate(clusters):
+        if label == i:
+            print(f"  {vendor_names[idx]}")
+    print("")
+
+# Optionally, if you'd like to evaluate the clustering
+sil_score = silhouette_score(X, clusters)
+print(f"Silhouette Score: {sil_score:.2f}")
