@@ -1,7 +1,6 @@
 import nltk
 from nltk.util import ngrams
 from scipy.cluster.hierarchy import linkage, dendrogram, fcluster
-from scipy.spatial.distance import pdist, squareform
 import matplotlib.pyplot as plt
 
 nltk.download('punkt')
@@ -12,9 +11,21 @@ def jaccard_distance(str1, str2, n=3):
     s2 = set(ngrams(str2, n))
     return 1 - float(len(s1 & s2)) / float(len(s1 | s2))
 
+def create_condensed_distance_matrix(strings, n=3):
+    """Generate a condensed matrix of Jaccard distances."""
+    num_strings = len(strings)
+    distance_array = []
+    
+    for i in range(num_strings):
+        for j in range(i+1, num_strings):
+            distance_array.append(jaccard_distance(strings[i], strings[j], n))
+    
+    return distance_array
+
 def cluster_strings(strings, t=0.6, n=3):
     """Cluster strings using hierarchical clustering and Jaccard distance."""
-    distance_array = pdist(strings, lambda x, y: jaccard_distance(x, y, n))
+    distance_array = create_condensed_distance_matrix(strings, n)
+    
     linkage_matrix = linkage(distance_array, method="single")
     
     plt.figure(figsize=(10, 5))
