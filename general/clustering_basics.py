@@ -1,9 +1,7 @@
-import numpy as np
 import nltk
 from nltk.util import ngrams
 from scipy.cluster.hierarchy import linkage, dendrogram, fcluster
 import matplotlib.pyplot as plt
-from sklearn.metrics import pairwise_distances
 
 nltk.download('punkt')
 
@@ -13,9 +11,20 @@ def jaccard_distance(str1, str2, n=3):
     s2 = set(ngrams(str2, n))
     return 1 - float(len(s1 & s2)) / float(len(s1 | s2))
 
+def create_distance_matrix(strings, n=3):
+    """Generate a matrix of Jaccard distances between each pair of strings."""
+    num_strings = len(strings)
+    distance_matrix = np.zeros((num_strings, num_strings))
+    
+    for i in range(num_strings):
+        for j in range(num_strings):
+            distance_matrix[i][j] = jaccard_distance(strings[i], strings[j], n)
+    
+    return distance_matrix
+
 def cluster_strings(strings, t=0.6, n=3):
     """Cluster strings using hierarchical clustering and Jaccard distance."""
-    distance_matrix = pairwise_distances(strings, metric=lambda x, y: jaccard_distance(x, y, n))
+    distance_matrix = create_distance_matrix(strings, n)
     
     linkage_matrix = linkage(distance_matrix, method="single")
     
@@ -49,4 +58,3 @@ vendor_names = [
 clusters = cluster_strings(vendor_names, t=0.6)
 for cluster_id, names in clusters.items():
     print(f"Cluster {cluster_id}: {', '.join(names)}")
-
